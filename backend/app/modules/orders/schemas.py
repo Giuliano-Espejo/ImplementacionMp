@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 from sqlmodel import SQLModel, Field
 
@@ -14,7 +15,9 @@ class PedidoCreate(SQLModel):
 
 
 class PedidoPublic(SQLModel):
+    model_config = {"from_attributes": True}
+
     id:         int
     total:      float
     estado:     str
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None

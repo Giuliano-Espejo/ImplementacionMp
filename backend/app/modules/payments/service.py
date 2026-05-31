@@ -1,4 +1,3 @@
-import os
 import uuid
 import logging
 from datetime import datetime
@@ -7,6 +6,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlmodel import Session
 
+from app.core.config import settings
 from app.modules.orders.models import Pedido
 from app.modules.payments.models import Pago
 from app.modules.payments.schemas import PagoCrearResponse, PagoEstadoResponse
@@ -23,10 +23,10 @@ class PaymentService:
     # ── SDK helpers (privados) ──────────────────────────────────────────────
 
     def _get_mp_access_token(self) -> Optional[str]:
-        return os.getenv("MP_ACCESS_TOKEN")
+        return settings.MP_ACCESS_TOKEN
 
     def _get_mp_public_key(self) -> Optional[str]:
-        return os.getenv("MP_PUBLIC_KEY")
+        return settings.MP_PUBLIC_KEY
 
     def _crear_preferencia_mp(self, monto: float, titulo: str,
                                pedido_id: int, back_urls: dict) -> dict:
@@ -49,10 +49,9 @@ class PaymentService:
                 }],
                 "external_reference": str(pedido_id),
                 "back_urls": back_urls,
-                "notification_url": os.getenv(
-                    "MP_WEBHOOK_URL",
-                    f"{os.getenv('VITE_API_URL', 'http://localhost:8000')}"
-                    f"/api/v1/pagos/webhook"
+                "notification_url": (
+                    settings.MP_WEBHOOK_URL
+                    or f"{settings.VITE_API_URL}/api/v1/pagos/webhook"
                 ),
                 "auto_return": "approved",
             }
@@ -122,7 +121,7 @@ class PaymentService:
                 detail="MercadoPago no configurado. Configure MP_ACCESS_TOKEN",
             )
 
-        ngrok_url = os.getenv("NGROK_URL", "http://localhost:8000")
+        ngrok_url = settings.NGROK_URL or "http://localhost:8000"
         back_urls = {
             "success": f"{ngrok_url}/api/v1/pagos/redirect/{pedido_id}/success",
             "failure": f"{ngrok_url}/api/v1/pagos/redirect/{pedido_id}/failure",

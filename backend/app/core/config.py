@@ -11,13 +11,20 @@ class Settings(BaseSettings):
     postgres_host:     str = "localhost"
     postgres_port:     int = 5432
 
-    @computed_field
     @property
-    def DATABASE_URL(self) -> str:
-        return (
-            f"postgresql+psycopg2://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-        )
+    def db_driver(self) -> str:
+        return "postgresql+psycopg2"
+
+    @property
+    def db_conn_params(self) -> dict:
+        return {
+            "drivername": self.db_driver,
+            "username":   self.postgres_user,
+            "password":   self.postgres_password,
+            "host":       self.postgres_host,
+            "port":       self.postgres_port,
+            "database":   self.postgres_db,
+        }
 
     # --- MercadoPago ---
     MP_ACCESS_TOKEN:  Optional[str] = None

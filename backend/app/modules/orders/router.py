@@ -12,7 +12,7 @@ def get_pedido_service(session: Session = Depends(get_session)) -> PedidoService
     return PedidoService(session)
 
 
-@router.post("/", response_model=PedidoPublic, status_code=201)
+@router.post("", response_model=PedidoPublic, status_code=201)
 def create_pedido(
     data: PedidoCreate,
     svc: PedidoService = Depends(get_pedido_service),

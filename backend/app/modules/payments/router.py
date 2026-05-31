@@ -1,9 +1,9 @@
-import os
 import logging
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from sqlmodel import Session
 
+from app.core.config import settings
 from app.core.database import get_session
 from app.modules.payments.schemas import (
     CrearPagoRequest,
@@ -57,7 +57,7 @@ def confirm_payment(
 
 @router.get("/redirect/{pedido_id}/{status}")
 async def redirect_after_pago(pedido_id: int, status: str, request: Request):
-    frontend_url = os.getenv("VITE_FRONTEND_URL", "http://localhost:5173")
+    frontend_url = settings.VITE_FRONTEND_URL or "http://localhost:5173"
     qs = request.url.query
     url = f"{frontend_url}/orders/{pedido_id}/{status}"
     if qs:

@@ -27,6 +27,4 @@ class PedidoService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Pedido no encontrado",
                 )
-            pedido_pub = PedidoPublic.model_validate(pedido)
-            pedido_pub.created_at = pedido.created_at.isoformat()
-            return pedido_pub
+            return PedidoPublic.model_validate(pedido)

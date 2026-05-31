@@ -12,7 +12,7 @@ def get_producto_service(session: Session = Depends(get_session)) -> ProductoSer
     return ProductoService(session)
 
 
-@router.get("/", response_model=list[ProductoPublic])
+@router.get("", response_model=list[ProductoPublic])
 def list_productos(
     svc: ProductoService = Depends(get_producto_service),
 ):

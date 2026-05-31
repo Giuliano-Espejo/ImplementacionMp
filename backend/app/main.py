@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import settings
 from app.core.database import create_all_tables
 
@@ -14,28 +15,34 @@ async def lifespan(app: FastAPI):
     yield
 
 
+cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",")]
+
+
+class CORSMiddlewareManual(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.method == "OPTIONS":
+            response = Response(status_code=200)
+        else:
+            response = await call_next(request)
+        origin = request.headers.get("origin", "")
+        if origin in cors_origins or "*" in cors_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["ngrok-skip-browser-warning"] = "true"
+        return response
+
+
 app = FastAPI(
     title="Implementacion MP FastAPI",
     description="API de referencia para integración con MercadoPago",
     version="1.0.0",
     lifespan=lifespan,
+    redirect_slashes=False,
 )
 
-cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",")]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-@app.middleware("http")
-async def add_ngrok_skip_warning(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["ngrok-skip-browser-warning"] = "true"
-    return response
+app.add_middleware(CORSMiddlewareManual)
 
 
 @app.get("/health")

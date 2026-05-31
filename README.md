@@ -114,7 +114,7 @@ CREATE DATABASE foodstore_simple;
 cd backend
 python -m venv .venv
 .venv\Scripts\activate     # Windows
-pip install fastapi uvicorn sqlmodel psycopg2-binary mercadopago pydantic-settings python-multipart
+pip install -r requirements.txt
 
 cp .env.example .env       # Editar con tus credenciales
 python -m app.db.seed       # Poblar tabla productos
@@ -123,13 +123,36 @@ uvicorn app.main:app --reload --port 8000
 
 Documentación interactiva en: http://localhost:8000/docs
 
-### 3. Frontend
+### 3. Ngrok (túnel HTTPS para webhook)
+
+Ngrok expone tu localhost con una URL pública HTTPS. Es **necesaria** porque MercadoPago:
+- Exige HTTPS en las `back_urls` de la preferencia (redirect post-pago)
+- Envía notificaciones IPN a una URL pública (webhook)
+
+```bash
+# 1. Descargar de https://ngrok.com/download
+# 2. Extraer en C:\ngrok\ (o donde prefieras)
+# 3. Agregar al PATH o ejecutar desde ahí
+
+ngrok http 8000
+```
+
+Te da una URL tipo `https://abc123.ngrok-free.app`. Esa URL va en `backend/.env`:
+
+```ini
+NGROK_URL=https://abc123.ngrok-free.app
+MP_WEBHOOK_URL=https://abc123.ngrok-free.app/api/v1/pagos/webhook
+```
+
+Dejá ngrok corriendo en una terminal aparte mientras desarrollás.
+
+### 4. Frontend
 
 ```bash
 cd frontend
-npm install
+pnpm i
 cp .env.example .env
-npm run dev
+pnpm dev
 ```
 
 Abrir http://localhost:5173
@@ -166,4 +189,5 @@ Abrir http://localhost:5173
 - El webhook **siempre** responde HTTP 200, incluso si hay error interno. MP bloquea IPs que devuelven 4xx/5xx.
 - Se usa `idempotency_key` (UUID) por cada intento de pago para prevenir duplicados.
 - Ngrok puede perder query params en redirects → el endpoint `/confirm` resuelve `payment_id` desde el body y del query string.
-- Para probar con ngrok: `ngrok http 8000`, copiar la URL HTTPS a `NGROK_URL` y `MP_WEBHOOK_URL` en `.env`.
+- Si ngrok se detiene, se genera una nueva URL. Actualizá `NGROK_URL` y `MP_WEBHOOK_URL` en `.env` y reiniciá el backend.
+- No es necesario crear una cuenta gratuita de ngrok para desarrollo — el plan free (`ngrok http 8000`) funciona sin registro.
